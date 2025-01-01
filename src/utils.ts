@@ -13,8 +13,8 @@ export function messageParser(input: string) {
 	const description = lines[1].trim();
 
 	let amount: number;
-	if (amountStr.endsWith('K')) {
-		amount = parseInt(amountStr.replace('K', '')) * 1000;
+	if (amountStr.endsWith('K') || amountStr.endsWith('k')) {
+		amount = parseInt(amountStr.toLowerCase().replace('k', '')) * 1000;
 	} else {
 		amount = parseInt(amountStr);
 	}
