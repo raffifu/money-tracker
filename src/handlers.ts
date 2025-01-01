@@ -1,34 +1,34 @@
 import { Message, CallbackQuery } from "@grammyjs/types";
-import { editMessageReplyMarkup, editMessageText, sendMessage } from "./servies/telegram";
+import { config, editMessageReplyMarkup, editMessageText, sendMessage } from "./servies/telegram";
 import { categoryKeyboard, getIdFromMessage, homeKeyboard, messageParser, responseBuilder } from "./utils";
-import { Expense, ExpenseCategoryKey, GeneralButtonKey } from "./types/app";
+import { Expense, ExpenseCategoryKey, GeneralButtonKey, Transaction } from "./types/app";
 import { createExpense, updateExpense } from "./servies/database";
 import { ExpenseCategories } from "./sources/constant";
 import { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 
 async function updateCategory(db: PostgresJsDatabase, expenseId: number, data: ExpenseCategoryKey, message: Message) {
-	const response = await updateExpense(db, expenseId, {
+	const ret = await updateExpense(db, expenseId, {
 		updatedAt: new Date(),
 		category: data
 	})
 
-	if (!response)
+	if (!ret)
 		return
 
 	await editMessageText({
 		message_id: message.message_id,
 		chat_id: message.chat.id,
-		text: responseBuilder(response),
+		text: responseBuilder(ret),
 		reply_markup: homeKeyboard()
 	})
 }
 
 async function deleteTransaction(db: PostgresJsDatabase, expenseId: number, message: Message) {
-	const response = await updateExpense(db, expenseId, {
+	const ret = await updateExpense(db, expenseId, {
 		deletedAt: new Date()
 	})
 
-	if (!response)
+	if (!ret)
 		return
 
 	await editMessageText({
@@ -61,12 +61,12 @@ export async function handleCallback(db: PostgresJsDatabase, callbackQuery: Call
 	if (!data || !message)
 		return
 
+	const { text } = message
+	if (!text || message.chat.id !== config.CHAT_ID)
+		return
+
 	let expenseId
 	try {
-		const { text } = message
-		if (!text)
-			return
-
 		expenseId = getIdFromMessage(text)
 	}
 	catch (error) {
@@ -87,7 +87,7 @@ export async function handleMessage(db: PostgresJsDatabase, message: Message) {
 	const chat_id = message.chat.id
 	const text = message.text
 
-	if (!text)
+	if (!text || chat_id !== config.CHAT_ID)
 		return
 
 	let parsed
@@ -110,19 +110,47 @@ export async function handleMessage(db: PostgresJsDatabase, message: Message) {
 		type: 'EXPENSE'
 	};
 
-	const response = await createExpense(db, transaction)
+	const ret = await createExpense(db, [transaction])
 
-	if (!response)
+	if (ret && ret.length > 0) {
+		transaction.id = ret[0].id
+
+		await sendMessage({
+			chat_id: config.CHAT_ID,
+			text: responseBuilder(transaction),
+			reply_markup: categoryKeyboard(),
+			reply_parameters: {
+				message_id: id
+			}
+		})
+	}
+}
+
+export async function handleApiReq(db: PostgresJsDatabase, request: Request) {
+	const response: Transaction[] = await request.json()
+
+	const expensePayload: Expense[] = response.map(it => ({
+		date: new Date(it.date * 1000),
+		amount: it.amount,
+		description: it.to,
+		category: it.category,
+		account: it.account,
+		type: it.type
+	}))
+
+	const ret = await createExpense(db, expensePayload)
+
+	if (!ret || ret.length === 0)
 		return
 
-	transaction.id = response.id
-
-	await sendMessage({
-		chat_id,
-		text: responseBuilder(transaction),
-		reply_markup: categoryKeyboard(),
-		reply_parameters: {
-			message_id: id
-		}
+	const promises = ret.map(async it => {
+		await sendMessage({
+			chat_id: config.CHAT_ID,
+			text: responseBuilder(it),
+			reply_markup: categoryKeyboard()
+		})
 	})
+
+	await Promise.all(promises)
 }
+

@@ -27,6 +27,17 @@ export type InlineButton = {
 	icon: string;
 }
 
+export type Transaction = {
+	note: string;
+	category: ExpenseCategoryKey;
+	type: "EXPENSE" | "INCOME";
+	account: 'JAGO' | 'CIMB' | 'CASH';
+	to: string;
+	amount: number;
+	date: number;
+};
+
+
 export interface Expense {
 	id?: number;
 	date: Date;

@@ -2,7 +2,8 @@ import { editMessageReplyMarkupParams, EditMessageTextParams, SendMessageParams 
 
 // TODO: Create a proper way to use TELEGRAM_API_URL, maybe the class is sufficient
 export const config = {
-	TELEGRAM_API_URL: ''
+	TELEGRAM_API_URL: '',
+	CHAT_ID: 0
 }
 
 export async function sendMessage(body: SendMessageParams) {
