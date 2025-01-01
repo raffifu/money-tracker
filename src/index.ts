@@ -1,18 +1,23 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { Update } from "@grammyjs/types";
+import { handleMessage, handleCallback } from "./handlers";
+import { getDb } from "./servies/database";
+import { config } from "./servies/telegram";
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+		config.TELEGRAM_API_URL = env.TELEGRAM_API_URL
+		const db = getDb(env.DATABASE_URL)
+
+		if (request.method === 'POST') {
+			const response: Update = await request.json();
+
+			if (response.message) {
+				await handleMessage(db, response.message)
+			} else if (response.callback_query) {
+				await handleCallback(db, response.callback_query)
+			}
+		}
+
+		return new Response("OK")
 	},
 } satisfies ExportedHandler<Env>;
