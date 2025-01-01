@@ -4,20 +4,23 @@
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "start": "wrangler dev",
+    "dev:host": "wrangler dev --ip 0.0.0.0 --env=development",
+    "db:dev":"dotenvx run -f .dev.vars.development -- drizzle-kit push",
+    "db:prod":"dotenvx run -f .dev.vars.production -- drizzle-kit push",
     "test": "vitest",
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.5.2",
     "@cloudflare/workers-types": "^4.20241224.0",
+    "@dotenvx/dotenvx": "^1.32.0",
     "@grammyjs/types": "^3.17.0",
     "typescript": "^5.5.2",
     "vitest": "2.1.8",
     "wrangler": "^3.60.3"
   },
   "dependencies": {
+    "drizzle-kit": "^0.30.1",
     "drizzle-orm": "^0.38.3",
     "pg": "^8.13.1",
     "postgres": "^3.4.5"

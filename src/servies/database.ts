@@ -12,9 +12,9 @@ export const getDb = (dbUrl: string) => {
 }
 
 // Create a new expense
-export const createExpense = async (db: PostgresJsDatabase, newExpense: Expense) => {
+export const createExpense = async (db: PostgresJsDatabase, newExpense: Expense[]) => {
 	const result = await db.insert(expense).values(newExpense).returning();
-	return result.length !== 0 ? result[0] : null;
+	return result
 };
 
 // Read all expenses

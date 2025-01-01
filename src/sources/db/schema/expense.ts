@@ -2,7 +2,7 @@ import { pgEnum, pgSchema, serial, timestamp, text, integer } from "drizzle-orm/
 
 const transaction = pgSchema('transaction');
 
-export const expenseCategory = pgEnum('expense_category', [
+export const expenseCategory = transaction.enum('expense_category', [
 	'FoodAndDrinks',
 	'SocialLife',
 	'Work',
@@ -17,13 +17,13 @@ export const expenseCategory = pgEnum('expense_category', [
 	'Cashout'
 ]);
 
-export const expenseAccount = pgEnum('expense_account', [
+export const expenseAccount = transaction.enum('expense_account', [
 	'JAGO',
 	'CASH',
 	'CIMB'
 ]);
 
-export const expenseType = pgEnum('expense_type', [
+export const expenseType = transaction.enum('expense_type', [
 	'INCOME',
 	'EXPENSE',
 ]);
